@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# 
+#
 # LSST Data Management System
 # Copyright 2008, 2009, 2010 LSST Corporation.
-# 
+#
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
 #
@@ -11,25 +11,27 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
-# You should have received a copy of the LSST License Statement and 
-# the GNU General Public License along with this program.  If not, 
+#
+# You should have received a copy of the LSST License Statement and
+# the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
 
-import sys, os
+import sys
+import os
 import optparse
 import lsst.utils
 import lsst.pex.config as pexConfig
 from lsst.ctrl.execute.allocator import Allocator
 from lsst.ctrl.execute.allocatorParser import AllocatorParser
 from string import Template
+
 
 def main():
     """Allocates Condor glide-in nodes through PBS scheduler on a remote Node.
@@ -57,7 +59,7 @@ def main():
     creator.loadPbs(configName)
 
     verbose = creator.isVerbose()
-    
+
     pbsName = os.path.join(platformPkgDir, "etc", "templates", "generic.pbs.template")
     generatedPbsFile = creator.createPbsFile(pbsName)
 
@@ -68,7 +70,7 @@ def main():
     template = Template(scratchDirParam)
     scratchDir = template.substitute(USER_HOME=creator.getUserHome())
     userName = creator.getUserName()
-    
+
     hostName = creator.getHostName()
 
     utilityPath = creator.getUtilityPath()
@@ -76,7 +78,8 @@ def main():
     #
     # execute copy of PBS file to XSEDE node
     #
-    cmd = "%s %s %s@%s:%s/%s" % (remoteCopyCmd, generatedPbsFile, userName, hostName, scratchDir, os.path.basename(generatedPbsFile))
+    cmd = "%s %s %s@%s:%s/%s" % (remoteCopyCmd, generatedPbsFile, userName,
+                                 hostName, scratchDir, os.path.basename(generatedPbsFile))
     if verbose:
         print cmd
     exitCode = runCommand(cmd, verbose)
@@ -87,7 +90,8 @@ def main():
     #
     # execute copy of Condor config file to XSEDE node
     #
-    cmd = "%s %s %s@%s:%s/%s" % (remoteCopyCmd, generatedCondorConfigFile, userName, hostName, scratchDir, os.path.basename(generatedCondorConfigFile))
+    cmd = "%s %s %s@%s:%s/%s" % (remoteCopyCmd, generatedCondorConfigFile, userName,
+                                 hostName, scratchDir, os.path.basename(generatedCondorConfigFile))
     if verbose:
         print cmd
     exitCode = runCommand(cmd, verbose)
@@ -98,7 +102,8 @@ def main():
     #
     # execute qsub command on XSEDE node to perform Condor glide-in
     #
-    cmd = "%s %s@%s %s/qsub %s/%s" % (remoteLoginCmd, userName, hostName, utilityPath, scratchDir, os.path.basename(generatedPbsFile))
+    cmd = "%s %s@%s %s/qsub %s/%s" % (remoteLoginCmd, userName, hostName,
+                                      utilityPath, scratchDir, os.path.basename(generatedPbsFile))
     if verbose:
         print cmd
     exitCode = runCommand(cmd, verbose)
@@ -117,6 +122,7 @@ def main():
     print creator.getNodeSetName()
     sys.exit(0)
 
+
 def runCommand(cmd, verbose):
     cmd_split = cmd.split()
     pid = os.fork()
@@ -132,7 +138,7 @@ def runCommand(cmd, verbose):
         # end up not being useful.  So we optinally close the i/o output
         # of the executing command down.
         #
-        # stdin/stdio/stderr is treated specially 
+        # stdin/stdio/stderr is treated specially
         # by python, so we have to close down
         # both the python objects and the
         # underlying c implementations
@@ -148,7 +154,7 @@ def runCommand(cmd, verbose):
         os.execvp(cmd_split[0], cmd_split)
     pid, status = os.wait()
     # high order bits are status, low order bits are signal.
-    exitCode = (status & 0xff00)  >> 8
+    exitCode = (status & 0xff00) >> 8
     return exitCode
 
 if __name__ == "__main__":
